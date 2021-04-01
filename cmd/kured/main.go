@@ -28,7 +28,6 @@ import (
 	"github.com/weaveworks/kured/pkg/alerts"
 	"github.com/weaveworks/kured/pkg/daemonsetlock"
 	"github.com/weaveworks/kured/pkg/delaytick"
-	"github.com/weaveworks/kured/pkg/notifications/slack"
 	"github.com/weaveworks/kured/pkg/taints"
 	"github.com/weaveworks/kured/pkg/timewindow"
 	shoutrrr "github.com/containrrr/shoutrrr"
