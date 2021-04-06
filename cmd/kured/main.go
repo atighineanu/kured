@@ -322,16 +322,7 @@ func release(lock *daemonsetlock.DaemonSetLock) {
 	}
 }
 
-func drain(client *kubernetes.Clientset, node *v1.Node) {
-	nodename := node.GetName()
-
-	log.Infof("Draining node %s", nodename)
-
-	if notifyURL != "" {
-		if err := shoutrrr.Send(notifyURL, fmt.Sprintf(messageTemplateDrain, nodename)); err != nil {
-			log.Warnf("Error notifying: %v", err)
-		}
-	}
+func drain(client *kubernetes.Clientset, node *v1.Node, nodeID string) {
 
 	drainer := &kubectldrain.Helper{
 		Client:              client,
@@ -343,11 +334,11 @@ func drain(client *kubernetes.Clientset, node *v1.Node) {
 		Out:                 os.Stdout,
 	}
 	if err := kubectldrain.RunCordonOrUncordon(drainer, node, true); err != nil {
-		log.Fatalf("Error cordonning %s: %v", nodename, err)
+		log.Fatalf("Error cordonning %s: %v", nodeID, err)
 	}
 
-	if err := kubectldrain.RunNodeDrain(drainer, nodename); err != nil {
-		log.Fatalf("Error draining %s: %v", nodename, err)
+	if err := kubectldrain.RunNodeDrain(drainer, nodeID); err != nil {
+		log.Fatalf("Error draining %s: %v", nodeID, err)
 	}
 }
 
@@ -529,7 +520,14 @@ func rebootAsRequired(nodeID string, rebootCommand []string, sentinelCommand []s
 			continue
 		}
 
-		drain(client, node)
+		log.Infof("Draining node %s", nodeID)
+
+		if notifyURL != "" {
+			if err := shoutrrr.Send(notifyURL, fmt.Sprintf(messageTemplateDrain, nodeID)); err != nil {
+				log.Warnf("Error notifying: %v", err)
+			}
+		}
+		drain(client, node, nodeID)
 		invokeReboot(nodeID, rebootCommand)
 		for {
 			log.Infof("Waiting for reboot")
